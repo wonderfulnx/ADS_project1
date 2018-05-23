@@ -6,7 +6,7 @@
 #include <math.h>
 
 HogDescriptor::HogDescriptor() {
-    
+
 }
 
 HogDescriptor::~HogDescriptor() {
@@ -15,6 +15,21 @@ HogDescriptor::~HogDescriptor() {
 
 void HogDescriptor::readImage(string imageName) {
     image = imread(imageName, 1);
+    if (image.rows * image.cols > 10000){
+        Mat tempImage;
+        cout << "before resize:" << image.rows << " " << image.cols << endl;
+        double t = pow((double)10000/(image.rows * image.cols), 0.5);
+        //image.resize(10000);
+        resize(image, tempImage, Size(image.cols * t, image.rows * t),0,0,INTER_LINEAR);
+
+//        imshow("orgin", image);
+//        imshow("resized", tempImage);
+//        waitKey();
+
+        image = tempImage;
+
+        cout << "resized:" << image.rows << " " << image.cols << endl;
+    }
     return;
 }
 
@@ -23,7 +38,7 @@ vector<int> HogDescriptor::getHogFeature(){
     gammaTrans(2);
     //getGradient();
 
-    int cell_width = 8;
+    int cell_width = 16;
     int cell_block_num = 9;
     int cell_i_num = image.rows/cell_width;
     int cell_j_num = image.cols/cell_width;
@@ -41,14 +56,14 @@ vector<int> HogDescriptor::getHogFeature(){
             }
         }
 
-    for (int i = 0; i < cell_i_num*cell_j_num*cell_block_num; i++) {
-        if ((i % (2 * 2 * 9)) == 0)
-            cout << endl << "--------------------------" << endl;
-        else if (i % 9 == 0)
-            cout << endl;
-        cout << hogFeatrure[i] << " ";
-    }
-    cout << "feature size is:" << endl << hogFeatrure.size() << endl;
+//    for (int i = 0; i < cell_i_num*cell_j_num*cell_block_num; i++) {
+//        if ((i % (2 * 2 * 9)) == 0)
+//            cout << endl << "--------------------------" << endl;
+//        else if (i % 9 == 0)
+//            cout << endl;
+//        cout << hogFeatrure[i] << " ";
+//    }
+    cout << endl << "feature size is:" << endl << hogFeatrure.size() << endl;
 
     return hogFeatrure;
 }

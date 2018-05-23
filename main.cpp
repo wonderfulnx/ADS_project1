@@ -5,6 +5,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include "HogDescriptor.h"
+#include <fstream>
 
 using namespace std;
 using namespace cv;
@@ -24,10 +25,26 @@ int main() {
 //    cout << "descriptors.size = " << descriptors.size() << endl;//输出hog特征描绘子的维度
     string filename;
     //cin >> filename;
-    filename = "/home/naxin/Desktop/n01613177_3.JPEG";
-
+    filename = "/home/naxin/Documents/THU/ADS/Tests/images.txt";
+    ifstream infile(filename);
     HogDescriptor hog;
-    hog.readImage(filename);
-    auto vec = hog.getHogFeature();
+
+    int max = 0;
+    string max_name;
+    while (!infile.eof()){
+        string temp;
+        getline(infile, temp);
+        if (temp.empty()) continue;
+        hog.readImage(temp);
+        int size = hog.getHogFeature().size();
+        if (size > max) {
+            max = size;
+            max_name = temp;
+        }
+    }
+    cout << "max: " << max << endl;
+    cout << "max_name: " << max_name << endl;
+
+
     return 0;
 }
