@@ -38,5 +38,22 @@ vector<int> ColorHistogram::getCHFeature() {
             feature[(b/segmentLength) + ((g / segmentLength) * unitDimension) +
                     ((r / segmentLength) * unitDimension * unitDimension)]++;
         }
+    Normalize(10000, feature);
     return feature;
+}
+
+void ColorHistogram::Normalize(int targetSize, vector<int> &vec) {
+    int currentSize = 0;
+    for_each(vec.begin(), vec.end(), [&](int item){
+        currentSize += item;
+        if (currentSize < 0){
+            throw runtime_error("over flow!");
+        }
+    });
+
+    for (int i = 0; i < vec.size(); i++){
+        vec[i] = vec[i]*targetSize/currentSize;
+    }
+
+    return;
 }

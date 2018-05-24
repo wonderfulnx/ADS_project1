@@ -23,6 +23,9 @@ public:
 
     void readImage(string imageName);
     vector<int> getCHFeature();
+
+private:
+    void Normalize(int targetSize, vector<int>& vec);
 };
 
 
