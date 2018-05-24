@@ -62,7 +62,7 @@ double ColorMoment::cal3moment(double miu, int k) {
             temp = abs(image.at<Vec3b>(i,j)[k] - miu);
             sum += temp * temp * temp;
         }
-//    cout << sum << endl;
+
     double result = pow(sum / (image.rows * image.cols),1.0/3);
     return result;
 }

@@ -15,9 +15,12 @@ using namespace cv;
 class HogDescriptor {
 private:
     Mat image;
+    int cell_width;
+    int cell_block_num;
+    int maxDimension;
 
 public:
-    HogDescriptor();
+    HogDescriptor(int bolckNum, int cellWid, int maxDimen);
     ~HogDescriptor();
 
     void readImage(string imageName);
@@ -26,11 +29,13 @@ public:
 private:
     void makeGray();
     void gammaTrans(float gamma);
-    void getGradient();
 
     void cellBin(int cell_i, int cell_j, int cell_width, int cellBlockNum, int* bin);
 
     inline pair<int, int> gradientOf(int i, int j);
+
+
+    void Normalize(int targetSize, vector<int>& vec);
 };
 
 

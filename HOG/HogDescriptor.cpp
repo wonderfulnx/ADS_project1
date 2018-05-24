@@ -5,8 +5,10 @@
 #include "HogDescriptor.h"
 #include <math.h>
 
-HogDescriptor::HogDescriptor() {
-
+HogDescriptor::HogDescriptor(int bolckNum, int cellWid, int maxDimen) {
+    cell_block_num = bolckNum;
+    cell_width = cellWid;
+    maxDimension = maxDimen;
 }
 
 HogDescriptor::~HogDescriptor() {
@@ -15,20 +17,14 @@ HogDescriptor::~HogDescriptor() {
 
 void HogDescriptor::readImage(string imageName) {
     image = imread(imageName, 1);
-    if (image.rows * image.cols > 10000){
+    int maxSize = (maxDimension*cell_width*cell_width)/cell_block_num;
+    if (image.rows * image.cols > maxSize){
         Mat tempImage;
-        cout << "before resize:" << image.rows << " " << image.cols << endl;
-        double t = pow((double)10000/(image.rows * image.cols), 0.5);
-        //image.resize(10000);
+
+        double t = pow((double)maxSize/(image.rows * image.cols), 0.5);
         resize(image, tempImage, Size(image.cols * t, image.rows * t),0,0,INTER_LINEAR);
-
-//        imshow("orgin", image);
-//        imshow("resized", tempImage);
-//        waitKey();
-
         image = tempImage;
 
-        cout << "resized:" << image.rows << " " << image.cols << endl;
     }
     return;
 }
@@ -36,36 +32,33 @@ void HogDescriptor::readImage(string imageName) {
 vector<int> HogDescriptor::getHogFeature(){
     makeGray();
     gammaTrans(2);
-    //getGradient();
 
-    int cell_width = 16;
-    int cell_block_num = 9;
     int cell_i_num = image.rows/cell_width;
     int cell_j_num = image.cols/cell_width;
-    vector<int> hogFeatrure(cell_i_num*cell_j_num*cell_block_num);
+    vector<int> hogFeature(maxDimension,0);
+
+    //vector<int> hogFeature(cell_i_num*cell_j_num*cell_block_num);
 
     int m = 0;
     int* cell_feature = new int[cell_block_num];
 
     for (int i = 0; i < cell_i_num; i++)
         for (int j = 0; j < cell_j_num; j++) {
-            cellBin(i,j,cell_width,cell_block_num,cell_feature);
+            cellBin(i * cell_width,j * cell_width,cell_width,cell_block_num,cell_feature);
             for (int k = 0; k < cell_block_num; k++) {
-                hogFeatrure[m] = cell_feature[k];
+                hogFeature[m] = cell_feature[k];
+                if (m > hogFeature.size())
+                    throw runtime_error("size not fit");
                 m++;
             }
         }
 
-//    for (int i = 0; i < cell_i_num*cell_j_num*cell_block_num; i++) {
-//        if ((i % (2 * 2 * 9)) == 0)
-//            cout << endl << "--------------------------" << endl;
-//        else if (i % 9 == 0)
-//            cout << endl;
-//        cout << hogFeatrure[i] << " ";
-//    }
-    cout << endl << "feature size is:" << endl << hogFeatrure.size() << endl;
+    delete cell_feature;
 
-    return hogFeatrure;
+    //cout << endl << "feature size is:" << endl << hogFeature.size() << endl;
+    Normalize(10000, hogFeature);
+
+    return hogFeature;
 }
 
 //use the opencv function to make the image gray
@@ -76,10 +69,9 @@ void HogDescriptor::makeGray() {
     return;
 }
 
+//对图像进行gamma校正
 void HogDescriptor::gammaTrans(float gamma) {
     unsigned char* imgSrc = image.data;
-//    Mat imageGamma(image.rows, image.cols, image.type());
-//    unsigned char* imgDst = imageGamma.data;
     unsigned char gammaTransTable[256];
 
     for (int i = 0; i < 256; i++){
@@ -89,53 +81,27 @@ void HogDescriptor::gammaTrans(float gamma) {
     for (int i = 0; i < image.rows * image.cols; i++)
         imgSrc[i] = gammaTransTable[imgSrc[i]];
 
-//    imshow("orgin", image);
-//    imshow("gamma", imageGamma);
-
     return;
 }
 
-void HogDescriptor::getGradient() {
-    unsigned char* imgSrc = image.data;
-    Mat imagegre(image.rows, image.cols, image.type());
-
-    //make the edge 0
-    for (int i = 0; i < image.rows; i++) {
-        imagegre.at<uchar>(i, 0) = 0;
-        imagegre.at<uchar>(i, image.cols - 1) = 0;
-    }
-    for (int j = 0; j < image.cols; j++) {
-        imagegre.at<uchar>(0, j) = 0;
-        imagegre.at<uchar>(image.rows - 1, j) = 0;
-    }
-
-    int GreX, GreY;
-
-    //compute the gradient
-    for (int i = 1; i < image.rows; i++)
-        for (int j = 1; j < image.cols; j++){
-            GreX = image.at<uchar>(i, j + 1) - image.at<uchar>(i, j - 1);
-            GreY = image.at<uchar>(i + 1, j) - image.at<uchar>(i - 1, j);
-
-        }
-
-    return;
-}
-
+//求每一个cell的feature
+//cell_i是cell左上角的坐标
 void HogDescriptor::cellBin(int cell_i, int cell_j, int cell_width, int cellBlockNum, int* bin) {
     for (int i = 0; i < cellBlockNum; i++)
         bin[i] = 0;
 
     pair<int, int> gra;
-    for (int i = cell_i; i < cell_i + cell_width && i < image.rows; i++)
-        for (int j = cell_j; j < cell_j + cell_width && j < image.cols; j++){
+    int unitSize = 180 / cellBlockNum;
+    for (int i = cell_i; (i < cell_i + cell_width) && (i < image.rows); i++)
+        for (int j = cell_j; (j < cell_j + cell_width) && (j < image.cols); j++){
             gra = gradientOf(i, j);
-            bin[gra.second/20] += gra.first;
+            bin[gra.second/unitSize] += gra.first;
         }
 
     return;
 }
 
+//获取某个点的梯度
 inline pair<int, int> HogDescriptor::gradientOf(int i, int j) {
     if (i == 0 || j == 0 || i == image.rows || j == image.cols)
         return pair<int, int>(0,0);
@@ -175,3 +141,18 @@ inline pair<int, int> HogDescriptor::gradientOf(int i, int j) {
     return pair<int, int>(gra, angle);
 }
 
+void HogDescriptor::Normalize(int targetSize, vector<int> &vec) {
+    int currentSize = 0;
+    for_each(vec.begin(), vec.end(), [&](int item){
+        currentSize += item;
+        if (currentSize < 0){
+            throw runtime_error("over flow!");
+        }
+    });
+
+    for (int i = 0; i < vec.size(); i++){
+        vec[i] = vec[i]*targetSize/currentSize;
+    }
+
+    return;
+}

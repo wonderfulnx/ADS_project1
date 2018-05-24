@@ -11,6 +11,55 @@ using namespace std;
 using namespace cv;
 
 int main() {
+    string filename;
+    //cin >> filename;
+    filename = "/home/naxin/Documents/THU/ADS/Tests/images.txt";
+    ifstream infile(filename);
+    HogDescriptor hog(9,16,350);
+
+    int max = 0;
+    string max_name;
+    int index = 0;
+    while (!infile.eof()){
+        string temp;
+        getline(infile, temp);
+        if (temp.empty()) continue;
+        hog.readImage(temp);
+        auto s = hog.getHogFeature();
+
+        cout << "done " << index << ": ";
+
+        int tempSize = 0;
+        for_each(s.begin(), s.end(), [&](int a){
+            tempSize += a;
+            cout << a << " ";
+        });
+        cout << endl;
+        cout << tempSize << endl;
+
+        index++;
+    }
+
+//    string filename;
+//    filename = "/home/naxin/Documents/THU/ADS/DS&Alg-Project1-Release/data/image/n07897438_3120.JPEG";
+//
+//    HogDescriptor hog(9,16,350);
+//
+//    hog.readImage(filename);
+//    auto s = hog.getHogFeature();
+//    int tempSize = 0;
+//    for_each(s.begin(), s.end(), [&](int a){
+//        tempSize += a;
+//        cout << a << " ";
+//    });
+//    cout << endl;
+//    cout << tempSize << endl;
+
+
+    return 0;
+}
+
+
 //    string filename;
 //    Mat imageMat;
 //    imageMat = imread("/home/naxin/Desktop/n01613177_3.JPEG", 1);//图像大小98 * 130
@@ -23,28 +72,3 @@ int main() {
 //    vector<float> descriptors;
 //    hog->compute(imageMat, descriptors, Size(16, 16), Size(0, 0));
 //    cout << "descriptors.size = " << descriptors.size() << endl;//输出hog特征描绘子的维度
-    string filename;
-    //cin >> filename;
-    filename = "/home/naxin/Documents/THU/ADS/Tests/images.txt";
-    ifstream infile(filename);
-    HogDescriptor hog;
-
-    int max = 0;
-    string max_name;
-    while (!infile.eof()){
-        string temp;
-        getline(infile, temp);
-        if (temp.empty()) continue;
-        hog.readImage(temp);
-        int size = hog.getHogFeature().size();
-        if (size > max) {
-            max = size;
-            max_name = temp;
-        }
-    }
-    cout << "max: " << max << endl;
-    cout << "max_name: " << max_name << endl;
-
-
-    return 0;
-}
